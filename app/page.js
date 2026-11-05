@@ -41,12 +41,35 @@ export default function InvitationPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Observer para animar elementos suavemente al bajar (Scroll Reveal)
+  useEffect(() => {
+    const elements = document.querySelectorAll(".reveal-item");
+    if (!elements.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
+      },
+      {
+        threshold: 0.18,
+        rootMargin: "0px 0px -30px 0px",
+      }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   const pad = (num) => String(num).padStart(2, "0");
 
   return (
     <div className="min-h-screen flex flex-col justify-between relative overflow-hidden bg-mercurio-navy text-white selection:bg-mercurio-pink selection:text-white">
       {/* Barra superior con el gradiente característico de Promociones */}
-      <div className="w-full h-1.5 mercurio-gradient-wave z-20" />
+      <div className="w-full h-1.5 mercurio-gradient-wave z-20 sticky top-0" />
 
       {/* Luces decorativas de fondo (estética Mercurio Promociones) */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
@@ -60,131 +83,145 @@ export default function InvitationPage() {
       </div>
 
       {/* Contenedor Principal Vertical tipo Tarjeta de Invitación */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 md:py-12">
-        <div className="w-full max-w-xl rounded-[2.5rem] bg-gradient-to-b from-[#1a356e]/90 to-[#11224a]/95 border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-xl px-6 py-10 md:px-12 md:py-14 flex flex-col items-center text-center space-y-10 animate-entrance relative overflow-hidden">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-6 md:py-12">
+        <div className="w-full max-w-xl rounded-[2.5rem] bg-gradient-to-b from-[#1a356e]/90 to-[#11224a]/95 border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-xl px-6 py-10 md:px-12 md:py-14 flex flex-col items-center text-center relative overflow-hidden">
           {/* Brillo interno superior */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
-          {/* 1. Logo Mercurio Blanco */}
-          <div className="pt-2">
-            <MercurioLogo className="h-16 md:h-20 w-auto mx-auto drop-shadow-md" />
-          </div>
+          {/* PRIMERA PANTALLA: Entrada escalonada (Stagger) */}
+          <div className="w-full min-h-[72vh] md:min-h-0 flex flex-col items-center justify-between gap-8 pb-6">
+            {/* 1. Logo Mercurio Blanco */}
+            <div className="pt-2 animate-stagger-1">
+              <MercurioLogo className="h-16 md:h-20 w-auto mx-auto drop-shadow-md" />
+            </div>
 
-          {/* 2. Título Fiesta de Fin de Año */}
-          <div className="space-y-3">
-            <span className="inline-block text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-mercurio-yellow px-4 py-1 rounded-full bg-white/5 border border-white/10">
-              Invitación Especial
-            </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none text-white">
-              Fiesta de <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/70">
-                Fin de Año
+            {/* 2. Título Fiesta de Fin de Año */}
+            <div className="space-y-3 animate-stagger-2">
+              <span className="inline-block text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-mercurio-yellow px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
+                Invitación Especial
               </span>
-            </h1>
-          </div>
-
-          {/* 3. Contador Regresivo en letras blancas (se modifica en vivo) */}
-          <div className="w-full space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/60">
-              Faltan para celebrar juntos
-            </p>
-            <div className="glass-dark rounded-2xl px-4 py-4 md:px-6 md:py-5 border border-white/25 shadow-inner">
-              <div className="flex items-center justify-center gap-2 sm:gap-4 text-white font-black tracking-tight">
-                <div className="flex flex-col items-center min-w-[56px] sm:min-w-[68px]">
-                  <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none">
-                    {mounted ? timeLeft.days : "--"}
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1">
-                    días
-                  </span>
-                </div>
-
-                <span className="text-xl sm:text-3xl text-mercurio-yellow font-black -mt-4">
-                  :
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-tight text-white">
+                <span className="inline-block px-2">Fiesta de</span> <br />
+                <span className="inline-block px-2 text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/75">
+                  Fin de Año
                 </span>
+              </h1>
+            </div>
 
-                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[64px]">
-                  <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none">
-                    {mounted ? pad(timeLeft.hours) : "--"}
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1">
-                    hs
-                  </span>
-                </div>
+            {/* 3. Contador Regresivo en letras blancas (se modifica en vivo) */}
+            <div className="w-full space-y-2.5 animate-stagger-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/60">
+                Faltan para celebrar juntos
+              </p>
+              <div className="glass-dark rounded-2xl px-4 py-4 md:px-6 md:py-5 border border-white/25 shadow-inner">
+                <div className="flex items-center justify-center gap-2 sm:gap-4 text-white font-black tracking-tight">
+                  <div className="flex flex-col items-center min-w-[54px] sm:min-w-[68px]">
+                    <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none">
+                      {mounted ? timeLeft.days : "--"}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1.5">
+                      días
+                    </span>
+                  </div>
 
-                <span className="text-xl sm:text-3xl text-mercurio-yellow font-black -mt-4">
-                  :
-                </span>
+                  <span className="text-xl sm:text-3xl text-mercurio-yellow font-black -mt-4">
+                    :
+                  </span>
 
-                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[64px]">
-                  <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none">
-                    {mounted ? pad(timeLeft.minutes) : "--"}
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1">
-                    min
-                  </span>
-                </div>
+                  <div className="flex flex-col items-center min-w-[48px] sm:min-w-[64px]">
+                    <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none">
+                      {mounted ? pad(timeLeft.hours) : "--"}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1.5">
+                      hs
+                    </span>
+                  </div>
 
-                <span className="text-xl sm:text-3xl text-mercurio-pink font-black -mt-4">
-                  :
-                </span>
+                  <span className="text-xl sm:text-3xl text-mercurio-yellow font-black -mt-4">
+                    :
+                  </span>
 
-                <div className="flex flex-col items-center min-w-[50px] sm:min-w-[64px]">
-                  <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none text-mercurio-yellow">
-                    {mounted ? pad(timeLeft.seconds) : "--"}
+                  <div className="flex flex-col items-center min-w-[48px] sm:min-w-[64px]">
+                    <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none">
+                      {mounted ? pad(timeLeft.minutes) : "--"}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1.5">
+                      min
+                    </span>
+                  </div>
+
+                  <span className="text-xl sm:text-3xl text-mercurio-pink font-black -mt-4">
+                    :
                   </span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1">
-                    seg
-                  </span>
+
+                  <div className="flex flex-col items-center min-w-[48px] sm:min-w-[64px]">
+                    <span className="text-2xl sm:text-4xl md:text-5xl tabular-nums leading-none text-mercurio-yellow">
+                      {mounted ? pad(timeLeft.seconds) : "--"}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 mt-1.5">
+                      seg
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Flecha indicadora para bajar */}
+            <a
+              href="#datos-fiesta"
+              className="animate-stagger-4 flex flex-col items-center gap-1.5 pt-2 text-white/60 hover:text-mercurio-yellow transition-colors group"
+              aria-label="Ver datos de la fiesta"
+            >
+              <span className="text-[10px] font-black uppercase tracking-[0.28em]">
+                Deslizá para ver los datos
+              </span>
+              <svg
+                className="w-5 h-5 animate-bounce text-mercurio-yellow"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                />
+              </svg>
+            </a>
           </div>
 
-          {/* Flecha indicadora para bajar */}
-          <a
-            href="#datos-fiesta"
-            className="flex flex-col items-center gap-1 text-white/50 hover:text-mercurio-yellow transition-colors group"
-            aria-label="Ver datos de la fiesta"
+          {/* SEGUNDA PARTE: Revelado suave al bajar (Scroll Reveal) */}
+          <div
+            id="datos-fiesta"
+            className="w-full space-y-9 pt-8 border-t border-white/10"
           >
-            <span className="text-[10px] font-black uppercase tracking-[0.25em]">
-              Datos del evento
-            </span>
-            <svg
-              className="w-5 h-5 animate-bounce text-mercurio-yellow"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </a>
-
-          {/* 4. Datos de la Fiesta: | 12 | Dic | 2026 | + Hora + Lugar */}
-          <div id="datos-fiesta" className="w-full space-y-6 pt-2">
-            {/* Fecha con separadores verticales como en el boceto */}
-            <div className="inline-flex items-center justify-center border-x-2 border-white/40 px-4 sm:px-8 py-2">
-              <span className="text-3xl sm:text-5xl font-black tracking-tight px-3 sm:px-5">
-                12
-              </span>
-              <span className="h-10 sm:h-12 w-0.5 bg-mercurio-yellow/80" />
-              <span className="text-3xl sm:text-5xl font-black uppercase tracking-wider text-mercurio-yellow px-4 sm:px-6">
-                Dic
-              </span>
-              <span className="h-10 sm:h-12 w-0.5 bg-mercurio-yellow/80" />
-              <span className="text-3xl sm:text-5xl font-black tracking-tight px-3 sm:px-5">
-                2026
-              </span>
+            {/* 4. Fecha con separadores verticales como en el boceto */}
+            <div className="reveal-item">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-3">
+                Agendá la fecha
+              </p>
+              <div className="inline-flex items-center justify-center border-x-2 border-white/40 px-4 sm:px-8 py-2">
+                <span className="text-3xl sm:text-5xl font-black tracking-tight px-3 sm:px-5">
+                  12
+                </span>
+                <span className="reveal-divider h-10 sm:h-12 w-0.5 bg-mercurio-yellow/80" />
+                <span className="text-3xl sm:text-5xl font-black uppercase tracking-wider text-mercurio-yellow px-4 sm:px-6">
+                  Dic
+                </span>
+                <span className="reveal-divider h-10 sm:h-12 w-0.5 bg-mercurio-yellow/80" />
+                <span className="text-3xl sm:text-5xl font-black tracking-tight px-3 sm:px-5">
+                  2026
+                </span>
+              </div>
             </div>
 
             {/* Horario y Dirección */}
-            <div className="space-y-3 text-white/90">
-              <div className="flex items-center justify-center gap-2 text-lg sm:text-xl font-extrabold tracking-wide">
+            <div
+              className="reveal-item space-y-4 text-white/90"
+              style={{ transitionDelay: "120ms" }}
+            >
+              <div className="inline-flex items-center justify-center gap-2.5 text-lg sm:text-xl font-extrabold tracking-wide bg-white/5 px-5 py-2.5 rounded-full border border-white/10">
                 <svg
                   className="w-5 h-5 text-mercurio-yellow shrink-0"
                   fill="none"
@@ -201,8 +238,8 @@ export default function InvitationPage() {
                 <span>20 hs a 3 hs</span>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2 text-base sm:text-lg font-bold text-white/90">
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center justify-center gap-2 text-base sm:text-lg font-bold text-white/95 px-2">
                   <svg
                     className="w-5 h-5 text-mercurio-pink shrink-0"
                     fill="none"
@@ -237,40 +274,46 @@ export default function InvitationPage() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* 5. Botón Confirmar Asistencia */}
-          <div className="w-full pt-2 space-y-2">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto sm:min-w-[300px] mx-auto mercurio-button-accent text-base sm:text-lg py-4 px-8"
+            {/* 5. Botón Confirmar Asistencia */}
+            <div
+              className="reveal-item w-full pt-2 space-y-2.5"
+              style={{ transitionDelay: "220ms" }}
             >
-              <span>Confirmar Asistencia</span>
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="w-full sm:w-auto sm:min-w-[300px] mx-auto mercurio-button-accent text-base sm:text-lg py-4 px-8"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
-            <p className="text-xs text-white/60 font-medium">
-              Indicá si asistís y si tenés requerimiento de menú (celíaco, vegetariano o alérgico)
-            </p>
-          </div>
+                <span>Confirmar Asistencia</span>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+              <p className="text-xs text-white/60 font-medium px-2">
+                Indicá si asistís y si tenés requerimiento de menú (celíaco, vegetariano o alérgico)
+              </p>
+            </div>
 
-          {/* 6. ¡TE ESPERAMOS! */}
-          <div className="pt-4 border-t border-white/10 w-full">
-            <p className="text-2xl sm:text-3xl font-black italic tracking-widest uppercase text-white drop-shadow">
-              ¡Te esperamos!
-            </p>
+            {/* 6. ¡TE ESPERAMOS! */}
+            <div
+              className="reveal-item pt-6 border-t border-white/10 w-full"
+              style={{ transitionDelay: "320ms" }}
+            >
+              <p className="text-2xl sm:text-3xl font-black italic tracking-widest uppercase text-white drop-shadow px-2">
+                ¡Te esperamos!
+              </p>
+            </div>
           </div>
         </div>
       </main>
