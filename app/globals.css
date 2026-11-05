@@ -26,6 +26,36 @@ body {
   background-color: var(--mercurio-navy);
   color: #1a202c;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* Textura de pliegues del Telón (Curtain) */
+.curtain-panel-left {
+  background:
+    radial-gradient(circle at 100% 50%, rgba(226, 27, 90, 0.18) 0%, transparent 60%),
+    repeating-linear-gradient(
+      90deg,
+      #0b1736 0px,
+      #162d5f 22px,
+      #1d3b7a 38px,
+      #0e1e45 56px,
+      #09132b 72px
+    );
+  box-shadow: 25px 0 60px rgba(0, 0, 0, 0.85);
+}
+
+.curtain-panel-right {
+  background:
+    radial-gradient(circle at 0% 50%, rgba(255, 215, 0, 0.14) 0%, transparent 60%),
+    repeating-linear-gradient(
+      90deg,
+      #09132b 0px,
+      #0e1e45 16px,
+      #1d3b7a 34px,
+      #162d5f 50px,
+      #0b1736 72px
+    );
+  box-shadow: -25px 0 60px rgba(0, 0, 0, 0.85);
 }
 
 /* Glassmorphism Classes */
