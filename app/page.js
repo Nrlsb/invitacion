@@ -46,11 +46,39 @@ export default function InvitationPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Control de apertura del telón según el scroll
+  // Forzar siempre inicio arriba (telón cerrado) al cargar o recargar y controlar apertura con scroll
   useEffect(() => {
     let rafId = null;
+    let isReadyForScroll = false;
+
+    const resetToTop = () => {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+      if (window.location.hash) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search
+        );
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      setOpenProgress(0);
+    };
+
+    resetToTop();
+
+    // Pequeño margen para ignorar cualquier restauración automática tardía del navegador al recargar
+    const readyTimer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      setOpenProgress(0);
+      isReadyForScroll = true;
+    }, 80);
 
     const updateScroll = () => {
+      if (!isReadyForScroll) return;
       const y = window.scrollY || window.pageYOffset || 0;
       const raw = Math.min(1, Math.max(0, y / CURTAIN_SCROLL_DISTANCE));
       // Curva suave (easeOutCubic) para que la apertura se sienta fluida
@@ -60,15 +88,32 @@ export default function InvitationPage() {
     };
 
     const onScroll = () => {
+      if (!isReadyForScroll) {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        return;
+      }
       if (rafId === null) {
         rafId = window.requestAnimationFrame(updateScroll);
       }
     };
 
-    updateScroll();
+    const onPageShow = (e) => {
+      if (e.persisted) {
+        isReadyForScroll = false;
+        resetToTop();
+        setTimeout(() => {
+          isReadyForScroll = true;
+        }, 80);
+      }
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("pageshow", onPageShow);
+
     return () => {
+      clearTimeout(readyTimer);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pageshow", onPageShow);
       if (rafId !== null) window.cancelAnimationFrame(rafId);
     };
   }, []);
@@ -103,8 +148,7 @@ export default function InvitationPage() {
     });
   };
 
-  const handleScrollToDetails = (e) => {
-    e.preventDefault();
+  const handleScrollToDetails = () => {
     const target = document.getElementById("datos-fiesta");
     if (target) {
       const rect = target.getBoundingClientRect();
@@ -332,11 +376,11 @@ export default function InvitationPage() {
                   </div>
                 </div>
 
-                {/* Flecha indicadora para seguir bajando a los datos */}
-                <a
-                  href="#datos-fiesta"
+                {/* Botón indicador para seguir bajando a los datos (sin agregar #hash a la URL) */}
+                <button
+                  type="button"
                   onClick={handleScrollToDetails}
-                  className="flex flex-col items-center gap-1.5 pt-2 text-white/60 hover:text-mercurio-yellow transition-colors group"
+                  className="flex flex-col items-center gap-1.5 pt-2 text-white/60 hover:text-mercurio-yellow transition-colors group cursor-pointer"
                   aria-label="Ver datos de la fiesta"
                 >
                   <span className="text-[10px] font-black uppercase tracking-[0.28em]">
@@ -355,7 +399,7 @@ export default function InvitationPage() {
                       d="M19 14l-7 7m0 0l-7-7m7 7V3"
                     />
                   </svg>
-                </a>
+                </button>
               </div>
 
               {/* SEGUNDA PARTE: Revelado suave al bajar (Scroll Reveal) */}
