@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import MercurioLogo from "./components/MercurioLogo";
 import RsvpModal from "./components/RsvpModal";
@@ -8,8 +8,8 @@ import RsvpModal from "./components/RsvpModal";
 // Fecha del evento: 12 de Diciembre de 2026 a las 20:00 hs (Hora Argentina UTC-3)
 const EVENT_DATE = new Date("2026-12-12T20:00:00-03:00").getTime();
 
-// Distancia de scroll (en px) necesaria para abrir el telón al 100%
-const CURTAIN_SCROLL_DISTANCE = 520;
+// Distancia de scroll (en px) para abrir el telón de forma gradual y progresiva
+const CURTAIN_SCROLL_DISTANCE = 800;
 
 function calculateTimeLeft() {
   const now = Date.now();
@@ -23,6 +23,12 @@ function calculateTimeLeft() {
   return { days, hours, minutes, seconds };
 }
 
+// Curva S suave (smoothstep) para que el inicio y el final del recorrido amortigüen
+function smoothstep(x) {
+  const t = Math.min(1, Math.max(0, x));
+  return t * t * (3 - 2 * t);
+}
+
 export default function InvitationPage() {
   const [timeLeft, setTimeLeft] = useState({
     days: 37,
@@ -32,7 +38,16 @@ export default function InvitationPage() {
   });
   const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [openProgress, setOpenProgress] = useState(0);
+
+  // Referencias directas al DOM para animar a 60/120fps sin re-renderizar React
+  const curtainContainerRef = useRef(null);
+  const leftCurtainRef = useRef(null);
+  const rightCurtainRef = useRef(null);
+  const centerBadgeRef = useRef(null);
+  const centerCardRef = useRef(null);
+  const topWaveRef = useRef(null);
+  const stageTransformRef = useRef(null);
+  const stageDimmerRef = useRef(null);
 
   // Contador regresivo en tiempo real
   useEffect(() => {
@@ -46,10 +61,91 @@ export default function InvitationPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Forzar siempre inicio arriba (telón cerrado) al cargar o recargar y controlar apertura con scroll
+  // Motor de física con inercia amortiguada (Lerp) para abrir/cerrar el telón suavemente
   useEffect(() => {
     let rafId = null;
     let isReadyForScroll = false;
+    let targetProgress = 0;
+    let currentProgress = 0;
+    let lastTime = performance.now();
+
+    const applyCurtainStyles = (rawProgress) => {
+      const p = smoothstep(rawProgress);
+
+      // 1. Hoja izquierda y derecha del telón (solo GPU transform3d)
+      if (leftCurtainRef.current) {
+        leftCurtainRef.current.style.transform = `translate3d(-${
+          p * 104
+        }%, 0, 0) skewX(-${p * 3.5}deg)`;
+      }
+      if (rightCurtainRef.current) {
+        rightCurtainRef.current.style.transform = `translate3d(${
+          p * 104
+        }%, 0, 0) skewX(${p * 3.5}deg)`;
+      }
+
+      // 2. Sello central de bienvenida
+      if (centerBadgeRef.current) {
+        const badgeOpacity = Math.max(0, 1 - smoothstep(rawProgress * 1.85));
+        const badgeScale = 1 + p * 0.14;
+        const badgeY = p * 28;
+        centerBadgeRef.current.style.opacity = String(badgeOpacity);
+        centerBadgeRef.current.style.transform = `translate3d(0, -${badgeY}px, 0) scale(${badgeScale})`;
+      }
+      if (centerCardRef.current) {
+        centerCardRef.current.style.pointerEvents =
+          rawProgress < 0.35 ? "auto" : "none";
+      }
+
+      // 3. Barra superior del telón
+      if (topWaveRef.current) {
+        topWaveRef.current.style.opacity = String(Math.max(0, 1 - p * 0.85));
+      }
+
+      // 4. Escala del escenario y velo de oscuridad (reemplaza filter:brightness por opacidad GPU)
+      if (stageTransformRef.current) {
+        const scale = 0.93 + 0.07 * p;
+        stageTransformRef.current.style.transform = `scale3d(${scale}, ${scale}, 1)`;
+      }
+      if (stageDimmerRef.current) {
+        const dimmerOpacity = Math.max(0, (1 - p) * 0.55);
+        stageDimmerRef.current.style.opacity = String(dimmerOpacity);
+        stageDimmerRef.current.style.visibility =
+          dimmerOpacity <= 0.005 ? "hidden" : "visible";
+      }
+
+      // 5. Ocultar contenedor del telón cuando termina de abrirse al 100%
+      if (curtainContainerRef.current) {
+        curtainContainerRef.current.style.visibility =
+          rawProgress >= 0.998 ? "hidden" : "visible";
+      }
+    };
+
+    const tick = (now) => {
+      const dt = Math.min(64, Math.max(1, now - lastTime));
+      lastTime = now;
+
+      // Factor de amortiguación independiente de los Hz del monitor (suave y sedoso)
+      const lerpFactor = 1 - Math.pow(0.0008, dt / 1000);
+      const diff = targetProgress - currentProgress;
+
+      if (Math.abs(diff) > 0.0004) {
+        currentProgress += diff * lerpFactor;
+        applyCurtainStyles(currentProgress);
+        rafId = window.requestAnimationFrame(tick);
+      } else {
+        currentProgress = targetProgress;
+        applyCurtainStyles(currentProgress);
+        rafId = null;
+      }
+    };
+
+    const startLoop = () => {
+      if (rafId === null) {
+        lastTime = performance.now();
+        rafId = window.requestAnimationFrame(tick);
+      }
+    };
 
     const resetToTop = () => {
       if ("scrollRestoration" in window.history) {
@@ -65,36 +161,29 @@ export default function InvitationPage() {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-      setOpenProgress(0);
+      targetProgress = 0;
+      currentProgress = 0;
+      applyCurtainStyles(0);
     };
 
     resetToTop();
 
-    // Pequeño margen para ignorar cualquier restauración automática tardía del navegador al recargar
     const readyTimer = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      setOpenProgress(0);
+      targetProgress = 0;
+      currentProgress = 0;
+      applyCurtainStyles(0);
       isReadyForScroll = true;
     }, 80);
-
-    const updateScroll = () => {
-      if (!isReadyForScroll) return;
-      const y = window.scrollY || window.pageYOffset || 0;
-      const raw = Math.min(1, Math.max(0, y / CURTAIN_SCROLL_DISTANCE));
-      // Curva suave (easeOutCubic) para que la apertura se sienta fluida
-      const eased = 1 - Math.pow(1 - raw, 2.2);
-      setOpenProgress(eased);
-      rafId = null;
-    };
 
     const onScroll = () => {
       if (!isReadyForScroll) {
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
         return;
       }
-      if (rafId === null) {
-        rafId = window.requestAnimationFrame(updateScroll);
-      }
+      const y = window.scrollY || window.pageYOffset || 0;
+      targetProgress = Math.min(1, Math.max(0, y / CURTAIN_SCROLL_DISTANCE));
+      startLoop();
     };
 
     const onPageShow = (e) => {
@@ -162,38 +251,29 @@ export default function InvitationPage() {
 
   const pad = (num) => String(num).padStart(2, "0");
 
-  // Transformaciones de la invitación detrás del telón (efecto escenario)
-  const stageScale = 0.92 + 0.08 * openProgress;
-  const stageBrightness = 0.5 + 0.5 * openProgress;
-  const isCurtainFullyOpen = openProgress >= 0.995;
-
   return (
     <div className="relative bg-mercurio-navy text-white selection:bg-mercurio-pink selection:text-white">
       {/* =========================================================
-          TELÓN INTERACTIVO (SE ABRE CON EL SCROLL)
+          TELÓN INTERACTIVO CON INERCIA AMORTIGUADA (LERP 60/120FPS)
          ========================================================= */}
       <div
-        className={`fixed inset-0 z-40 overflow-hidden pointer-events-none ${
-          isCurtainFullyOpen ? "invisible" : "visible"
-        }`}
-        aria-hidden={isCurtainFullyOpen}
+        ref={curtainContainerRef}
+        className="fixed inset-0 z-40 overflow-hidden pointer-events-none"
       >
         {/* Barra superior de gala */}
         <div
-          className="absolute top-0 left-0 w-full h-2 mercurio-gradient-wave z-30 shadow-lg"
-          style={{
-            opacity: 1 - openProgress * 0.8,
-          }}
+          ref={topWaveRef}
+          className="absolute top-0 left-0 w-full h-2 mercurio-gradient-wave z-30 shadow-lg will-change-[opacity]"
         />
 
         {/* Hoja Izquierda del Telón */}
         <div
+          ref={leftCurtainRef}
           className="curtain-panel-left absolute top-0 left-0 w-1/2 h-full border-r-2 border-mercurio-yellow/60 will-change-transform flex items-center justify-end"
           style={{
-            transform: `translate3d(-${openProgress * 106}%, 0, 0) skewX(-${
-              openProgress * 4
-            }deg)`,
+            transform: "translate3d(0%, 0, 0) skewX(0deg)",
             transformOrigin: "top left",
+            backfaceVisibility: "hidden",
           }}
         >
           {/* Cordón / Detalle dorado interior izquierdo */}
@@ -202,12 +282,12 @@ export default function InvitationPage() {
 
         {/* Hoja Derecha del Telón */}
         <div
+          ref={rightCurtainRef}
           className="curtain-panel-right absolute top-0 right-0 w-1/2 h-full border-l-2 border-mercurio-yellow/60 will-change-transform flex items-center justify-start"
           style={{
-            transform: `translate3d(${openProgress * 106}%, 0, 0) skewX(${
-              openProgress * 4
-            }deg)`,
+            transform: "translate3d(0%, 0, 0) skewX(0deg)",
             transformOrigin: "top right",
+            backfaceVisibility: "hidden",
           }}
         >
           {/* Cordón / Detalle dorado interior derecho */}
@@ -216,19 +296,13 @@ export default function InvitationPage() {
 
         {/* Sello / Medallón Central sobre el Telón Cerrado */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center p-6 z-20 will-change-transform"
-          style={{
-            opacity: Math.max(0, 1 - openProgress * 2.1),
-            transform: `scale(${1 + openProgress * 0.18}) translateY(-${
-              openProgress * 30
-            }px)`,
-          }}
+          ref={centerBadgeRef}
+          className="absolute inset-0 flex flex-col items-center justify-center p-6 z-20 will-change-[transform,opacity]"
         >
           <div
+            ref={centerCardRef}
             onClick={handleOpenCurtainClick}
-            className={`max-w-xs w-full rounded-[2rem] bg-[#0d1d42]/90 border border-mercurio-yellow/40 shadow-[0_20px_60px_rgba(0,0,0,0.85)] backdrop-blur-xl px-7 py-9 flex flex-col items-center text-center space-y-6 cursor-pointer group transition-transform active:scale-95 ${
-              openProgress < 0.35 ? "pointer-events-auto" : "pointer-events-none"
-            }`}
+            className="max-w-xs w-full rounded-[2rem] bg-[#0d1d42]/95 border border-mercurio-yellow/40 shadow-[0_20px_60px_rgba(0,0,0,0.85)] px-7 py-9 flex flex-col items-center text-center space-y-6 cursor-pointer group transition-transform active:scale-95 pointer-events-auto"
           >
             <MercurioLogo className="h-14 w-auto mx-auto drop-shadow" />
 
@@ -265,11 +339,18 @@ export default function InvitationPage() {
         </div>
       </div>
 
+      {/* Velo de penumbra ligero acelerado por GPU mientras el telón se abre */}
+      <div
+        ref={stageDimmerRef}
+        className="fixed inset-0 bg-[#050c1d] pointer-events-none z-30 will-change-[opacity]"
+        style={{ opacity: 0.55 }}
+      />
+
       {/* =========================================================
           ESCENARIO STICKY + ESPACIADOR DE APERTURA DEL TELÓN
          ========================================================= */}
       <div className="relative">
-        {/* Este contenedor queda fijo mientras se recorren los primeros 520px que abren el telón, y luego scrollea normalmente */}
+        {/* Este contenedor queda fijo mientras se recorren los primeros 800px que abren el telón, y luego scrollea normalmente */}
         <div className="sticky top-0 min-h-screen flex flex-col justify-between relative overflow-hidden">
           {/* Barra superior con el gradiente característico de Promociones */}
           <div className="w-full h-1.5 mercurio-gradient-wave z-20 sticky top-0" />
@@ -287,14 +368,15 @@ export default function InvitationPage() {
 
           {/* Contenedor Principal Vertical tipo Tarjeta de Invitación */}
           <main
+            ref={stageTransformRef}
             className="relative z-10 flex-1 flex items-center justify-center px-4 py-6 md:py-12 will-change-transform"
             style={{
-              transform: `scale(${stageScale})`,
-              filter: `brightness(${stageBrightness})`,
+              transform: "scale3d(0.93, 0.93, 1)",
               transformOrigin: "top center",
+              backfaceVisibility: "hidden",
             }}
           >
-            <div className="w-full max-w-xl rounded-[2.5rem] bg-gradient-to-b from-[#1a356e]/90 to-[#11224a]/95 border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] backdrop-blur-xl px-6 py-10 md:px-12 md:py-14 flex flex-col items-center text-center relative overflow-hidden">
+            <div className="w-full max-w-xl rounded-[2.5rem] bg-gradient-to-b from-[#1a356e]/95 to-[#11224a]/98 border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] px-6 py-10 md:px-12 md:py-14 flex flex-col items-center text-center relative overflow-hidden">
               {/* Brillo interno superior */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
@@ -376,7 +458,7 @@ export default function InvitationPage() {
                   </div>
                 </div>
 
-                {/* Botón indicador para seguir bajando a los datos (sin agregar #hash a la URL) */}
+                {/* Botón indicador para seguir bajando a los datos */}
                 <button
                   type="button"
                   onClick={handleScrollToDetails}
