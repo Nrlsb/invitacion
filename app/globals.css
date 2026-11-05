@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mercurio-navy: #162d5f;
+  --color-mercurio-pink: #e21b5a;
+  --color-mercurio-yellow: #ffd700;
+  --color-mercurio-light: #f8fafc;
+
+  --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-premium-hover: 0 20px 40px -15px rgba(0, 0, 0, 0.15), 0 8px 12px -5px rgba(0, 0, 0, 0.08);
+}
+
+:root {
+  --mercurio-navy: #162d5f;
+  --mercurio-pink: #e21b5a;
+  --mercurio-yellow: #ffd700;
+  --mercurio-light: #f8fafc;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Outfit', var(--font-geist-sans), sans-serif;
+  background-color: var(--mercurio-navy);
+  color: #1a202c;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Glassmorphism Classes */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-nav {
+  background: rgba(22, 45, 95, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mercurio-gradient-wave {
+  background: linear-gradient(90deg, var(--mercurio-yellow) 0%, var(--mercurio-pink) 100%);
+}
+
+.mercurio-card {
+  @apply bg-white rounded-[2rem] border border-white/40 overflow-hidden transition-all duration-300;
+  box-shadow: var(--shadow-premium);
+}
+
+.mercurio-card:hover {
+  @apply -translate-y-1;
+  box-shadow: var(--shadow-premium-hover);
+}
+
+.premium-button,
+.mercurio-button-primary {
+  @apply relative overflow-hidden rounded-full font-bold text-white transition-all active:scale-95 px-6 py-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2;
+  background-color: var(--mercurio-navy);
+}
+
+.mercurio-button-primary {
+  @apply bg-gradient-to-br from-[#162d5f] to-[#1e3a8a] border border-white/20;
+  box-shadow: 0 10px 15px -3px rgba(22, 45, 95, 0.4), 0 4px 6px -2px rgba(22, 45, 95, 0.2);
+}
+
+.mercurio-button-primary:hover {
+  @apply saturate-150;
+  box-shadow: 0 20px 25px -5px rgba(22, 45, 95, 0.5), 0 10px 10px -5px rgba(22, 45, 95, 0.3);
+}
+
+.mercurio-button-primary:disabled {
+  @apply from-slate-400 to-slate-500 shadow-none cursor-not-allowed transform-none;
+}
+
+.mercurio-button-accent {
+  @apply relative overflow-hidden rounded-full font-black uppercase tracking-wider text-white transition-all active:scale-95 px-8 py-4 shadow-xl hover:shadow-2xl hover:-translate-y-0.5 flex items-center justify-center gap-3 cursor-pointer;
+  background: linear-gradient(135deg, #e21b5a 0%, #be123c 100%);
+  box-shadow: 0 12px 24px -6px rgba(226, 27, 90, 0.55);
+}
+
+.mercurio-button-accent:hover {
+  box-shadow: 0 20px 30px -8px rgba(226, 27, 90, 0.7);
+}
+
+@keyframes entrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-entrance {
+  animation: entrance 0.6s ease-out forwards;
+}
