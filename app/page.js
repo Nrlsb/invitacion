@@ -578,7 +578,7 @@ export default function InvitationPage() {
                     onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto sm:min-w-[300px] mx-auto mercurio-button-accent text-base sm:text-lg py-4 px-8"
                   >
-                    <span>Confirmar Asistencia</span>
+                    <span>Responder Invitación</span>
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -594,7 +594,7 @@ export default function InvitationPage() {
                     </svg>
                   </button>
                   <p className="text-xs text-white/60 font-medium px-2">
-                    Indicá si asistís y si tenés requerimiento de menú (celíaco,
+                    Indicá si asistís o no, y si tenés requerimiento de menú (celíaco,
                     vegetariano o alérgico)
                   </p>
                 </div>

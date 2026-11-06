@@ -36,8 +36,8 @@ export default function LoginPage() {
         60 * 60 * 24 * 7
       }; SameSite=Lax`;
 
-      router.push("/admin");
-      router.refresh();
+      window.location.href = "/admin";
+      return;
     } catch (err) {
       let errorMessage = err.message || "Ocurrió un error inesperado";
       if (errorMessage === "Invalid login credentials") {
@@ -46,7 +46,6 @@ export default function LoginPage() {
         errorMessage = "Debés confirmar tu correo electrónico antes de ingresar.";
       }
       setError(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
