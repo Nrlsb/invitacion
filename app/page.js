@@ -552,12 +552,12 @@ export default function InvitationPage() {
                           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                       </svg>
-                      <span>CICAE (Salón SUM), Amado Aufranc 998, Esperanza.</span>
+                      <span>CICAE SUM, Amado Aufranc 890, Esperanza.</span>
                     </div>
 
                     <div>
                       <a
-                        href="https://www.google.com/maps/search/?api=1&query=CICAE+Amado+Aufranc+998+Esperanza+Santa+Fe"
+                        href="https://maps.app.goo.gl/VNFierLqNFQx9jZR9"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-mercurio-yellow/90 hover:text-mercurio-yellow underline underline-offset-4 transition-colors"
