@@ -49,8 +49,7 @@ export default function AdminPage() {
     await supabase.auth.signOut();
     document.cookie =
       "sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/login";
   };
 
   const handleDelete = async (id, name) => {
@@ -132,6 +131,14 @@ export default function AdminPage() {
   }, [rsvps, filterAttendance, searchTerm]);
 
   const exportToCSV = () => {
+    const sanitizeCsvCell = (value) => {
+      const str = String(value || "").replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(str)) {
+        return `"'${str}"`;
+      }
+      return `"${str}"`;
+    };
+
     const headers = [
       "Nombre y Apellido",
       "Asistencia",
@@ -143,13 +150,13 @@ export default function AdminPage() {
     ];
 
     const rows = filteredRsvps.map((r) => [
-      `"${(r.full_name || "").replace(/"/g, '""')}"`,
-      `"${ATTENDANCE_BADGES[r.attendance]?.label || r.attendance}"`,
+      sanitizeCsvCell(r.full_name),
+      sanitizeCsvCell(ATTENDANCE_BADGES[r.attendance]?.label || r.attendance),
       r.is_celiac ? "Sí" : "No",
       r.is_vegetarian ? "Sí" : "No",
       r.is_allergic ? "Sí" : "No",
-      `"${(r.dietary_notes || "").replace(/"/g, '""')}"`,
-      `"${new Date(r.created_at).toLocaleString("es-AR")}"`,
+      sanitizeCsvCell(r.dietary_notes),
+      sanitizeCsvCell(new Date(r.created_at).toLocaleString("es-AR")),
     ]);
 
     const csvContent =

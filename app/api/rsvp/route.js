@@ -33,19 +33,36 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const full_name = body.full_name?.toString().trim();
+    const rawName = body.full_name?.toString().trim() || "";
     const attendance = body.attendance?.toString().trim();
     const is_celiac = Boolean(body.is_celiac);
     const is_vegetarian = Boolean(body.is_vegetarian);
     const is_allergic = Boolean(body.is_allergic);
-    const dietary_notes = body.dietary_notes?.toString().trim() || null;
+    const rawNotes = body.dietary_notes?.toString().trim() || "";
 
-    if (!full_name) {
+    if (!rawName) {
       return Response.json(
         { error: "Por favor ingresá tu nombre y apellido." },
         { status: 400 }
       );
     }
+
+    if (rawName.length > 120) {
+      return Response.json(
+        { error: "El nombre y apellido no puede superar los 120 caracteres." },
+        { status: 400 }
+      );
+    }
+
+    if (rawNotes.length > 300) {
+      return Response.json(
+        { error: "El detalle de restricciones no puede superar los 300 caracteres." },
+        { status: 400 }
+      );
+    }
+
+    const full_name = rawName.slice(0, 120);
+    const dietary_notes = rawNotes ? rawNotes.slice(0, 300) : null;
 
     const validAttendances = ["asistire", "no_asistire", "no_lo_se"];
     if (!validAttendances.includes(attendance)) {

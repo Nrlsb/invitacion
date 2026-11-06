@@ -552,7 +552,7 @@ export default function InvitationPage() {
                           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                       </svg>
-                      <span>CICAE, Amado Aufranc 998, Esperanza.</span>
+                      <span>CICAE (Salón SUM), Amado Aufranc 998, Esperanza.</span>
                     </div>
 
                     <div>

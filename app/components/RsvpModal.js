@@ -161,6 +161,7 @@ export default function RsvpModal({ isOpen, onClose }) {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Ej: Juan Pérez"
+                  maxLength={120}
                   required
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-base font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-mercurio-navy focus:border-transparent placeholder:text-slate-400 transition-all"
                 />
@@ -261,6 +262,7 @@ export default function RsvpModal({ isOpen, onClose }) {
                       type="text"
                       value={dietaryNotes}
                       onChange={(e) => setDietaryNotes(e.target.value)}
+                      maxLength={300}
                       placeholder={
                         isAllergic
                           ? "Especificá a qué alimento sos alérgico/a..."
